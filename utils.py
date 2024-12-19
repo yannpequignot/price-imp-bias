@@ -61,7 +61,7 @@ class OneHiddenLayer(torch.nn.Module):
     def __init__(self, in_dim=28*28, out_dim=1, hidden_dim=100, scale=1.0, lambda1=1.0):
         super(OneHiddenLayer, self).__init__()
         self.init_scale = scale
-        self.linear1 = nn.Linear(in_dim, hidden_dim, bias=False)
+        self.linear1 = nn.Linear(in_dim, hidden_dim, bias=False) #TODO why no bias for first layer?
         self.linear2 = nn.Linear(hidden_dim, out_dim, bias=False)
 
         stdv = 1. / math.sqrt(lambda1*in_dim)
@@ -69,10 +69,22 @@ class OneHiddenLayer(torch.nn.Module):
         stdv = 1. / math.sqrt(hidden_dim)
         nn.init.uniform_(self.linear2.weight.data, -scale*stdv, scale*stdv)
 
-    def forward(self, x):
+    def forward(self, x, return_feat=False, return_featmargin=False):
         x = self.linear1(x)
-        x = torch.relu(x)
-        return self.linear2(x)
+        feat = torch.relu(x)
+        out = self.linear2(feat)
+        if return_feat: 
+            return out, feat 
+        if return_featmargin:
+            # L2 distance of feat to decision hyperplane
+            # $out = w2 \cdot feat$
+            # the decision hyperplane is given by $w \cdot f =0$
+            # L2 projection is given by $d=\frac{w2 \cdot feat}{\| w2 \|_2}$
+            feat_margin = out.abs()/torch.norm(self.linear2.weight.data.view(-1),2) 
+            return out, feat, feat_margin
+        else:
+            return out
+    
 
     def normalized_margin(self, x, y, p=2):
         parameters = torch.cat([p.view(-1) for p in self.parameters()])
