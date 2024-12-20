@@ -244,7 +244,7 @@ def retrieve_config(sweep_step):
         'algorithm': ['GD', 'SD'],
         'seed': [0, 1, 2],
         'scale': [0.01],
-        'start_epoch': [8000]
+        'start_epoch': [0]
     }
 
     grid_setups = list(
