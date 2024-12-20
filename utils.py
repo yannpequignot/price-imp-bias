@@ -196,9 +196,10 @@ def pgd(model, x, y, eps, alpha=1e-2, num_iter=10):
 def pgd_multiclass(model, x, y, eps, alpha=1e-2, num_iter=10):
     """Construct PGD adversarial examples on the examples x"""
     delta = torch.zeros_like(x, requires_grad=True)
+    ce_crit = nn.CrossEntropyLoss()
     for _ in range(num_iter):
         output = model(x+delta)
-        loss = nn.CrossEntropyLoss()(output, y)
+        loss = ce_crit(output, y)
         loss.backward()
         delta.data = (delta + alpha*delta.grad.detach().sign()).clamp(-eps, eps)
         delta.data = torch.min(torch.max(delta.data, x - eps), x + eps)
